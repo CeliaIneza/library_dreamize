@@ -14,21 +14,23 @@ exports.signup = async (req, res, next) => {
     const { error } = signupSchema.validate(req.body);
     if (error) return res.status(400).json({ message: error.details[0].message });
 
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body; // include role
+
     let existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ message: 'Email already registered' });
 
-    const user = await User.create({ name, email, password });
+    const user = await User.create({ name, email, password, role }); // include role here
     const token = generateToken(user._id);
 
     res.status(201).json({
       token,
-      user: { id: user._id, name: user.name, email: user.email }
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
     });
   } catch (err) {
     next(err);
   }
 };
+
 
 // Login
 exports.login = async (req, res, next) => {

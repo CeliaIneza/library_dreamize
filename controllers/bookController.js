@@ -15,13 +15,38 @@ exports.createBook = async (req, res, next) => {
 };
 
 // Read all Books
-exports.getBooks = async (req, res, next) => {
-  try {
-    const books = await Book.find();
-    res.json(books);
-  } catch (err) {
-    next(err);
-  }
+exports.getBooks = async (req, res) => {
+try {
+const { page = 1, limit = 5, search = '' } = req.query;
+
+
+// Search condition
+const query = {
+$or: [
+{ title: { $regex: search, $options: 'i' } },
+{ author: { $regex: search, $options: 'i' } },
+{ isbn: { $regex: search, $options: 'i' } }
+]
+};
+
+
+const books = await Book.find(query)
+.limit(limit * 1)
+.skip((page - 1) * limit);
+
+
+const total = await Book.countDocuments(query);
+
+
+res.json({
+total,
+page: Number(page),
+totalPages: Math.ceil(total / limit),
+books
+});
+} catch (error) {
+res.status(500).json({ message: error.message });
+}
 };
 
 // Read single Book
